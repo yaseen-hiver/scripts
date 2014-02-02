@@ -5,6 +5,12 @@
 #Note: Python 2.6.X compatible
 #Description: This script checks and logs the disk space as per threshold.
 
+# TIP: Run this script using Cron. Turn on Syslog Option 
+# If Splunk monitors  and alerts for syslog, look for pattern like below
+# Feb  2 18:44:07 linuxbox.domain.com DISKSPACE.PY[4062]: /home is  above threshold of 90. Currently at 93%
+
+# Usage: python diskSpaceChecker.py --threshold 85 --syslog 
+
 
 import commands
 import optparse
