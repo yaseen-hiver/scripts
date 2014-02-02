@@ -10,8 +10,7 @@ import commands
 import optparse
 import sys
 import time
-import logging
-import logging.handlers
+import syslog
 
 parser = optparse.OptionParser()
 
@@ -41,21 +40,18 @@ class  DiskSpaceAlert:
       return dictFSOccupied
   
   def logToSyslog(self,message):
-    my_logger = logging.getLogger(sys.argv[0])
-    my_logger.setLevel(logging.DEBUG)
-    handler = logging.handlers.SysLogHandler(address = '/dev/log')
-    my_logger.addHandler(handler)
-    my_logger.critical(sys.argv[0] + " " +  message)
+      syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT,)
+      syslog.syslog(message)
     
   
   def checkFileSystemAndLog(self, dictCurrentStatus, threshold=90, logFile=sys.stdout):
     for fs in dictCurrentStatus.keys():
       #print "Checking if", key, "is above", threshold, dictCurrentStatus[key]
       if dictCurrentStatus[fs] >= threshold :
-        logmessage = '[' + time.ctime() + "] " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
-        logFile.write(logmessage)
+        logmessage =   fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+        logFile.write('[' + time.ctime() + "] " + logmessage)
         if opts.syslog:
-          print "Logging to Syslog"
+          #print "Logging to Syslog"
           self.logToSyslog(logmessage)
         
         #print logmessage
@@ -68,7 +64,7 @@ dfOutPut = dobj.getDFOutput()
 #print dfOutPut
 #print dir(dobj)
 occupiedspace = dobj.getFileSystemStatus(dfOutPut)
-print occupiedspace
+#print occupiedspace
 
 
 
@@ -78,7 +74,7 @@ if opts.logfile == None:
 else:
     try:
       fh = open(opts.logfile,'a')
-      dobj.checkFileSystemAndLog(occupiedspace, threshold=int(opts.threshold), logfile=fh)
+      dobj.checkFileSystemAndLog(occupiedspace, threshold=int(opts.threshold), logFile=fh)
     except Exception:
       print "Cannot open log file for I/O"
       
