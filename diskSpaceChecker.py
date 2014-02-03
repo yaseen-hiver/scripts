@@ -20,6 +20,7 @@ import syslog
 
 
 def dprint(*message):
+  """Print only when Debug option is passed"""
   if opts.debug:
     print(message)
 
@@ -38,25 +39,29 @@ dprint("Arguments are", args)
 class  DiskSpaceChecker:
     
   def getDFOutput(self):
+    """Run df and get all filesystem status including NFS"""
     dfOutput  = commands.getstatusoutput \
     ("/bin/df -Ph  2>/dev/null | grep -vE '^Filesystem|tmpfs|cdrom|udev|none'")[1].split('\n')
     return dfOutput
     
     
   def getFileSystemStatus(self, listCurrentDF):
-      dictFSOccupied = {}
-      for line in range(0,len(listCurrentDF)):
-          dictFSOccupied[listCurrentDF[line].split()[5]] = int(listCurrentDF[line].split()[4].split('%')[0])
+    """Parses output from getDFOutput() and outputs a dictionary containing Filesystem usage"""
+    dictFSOccupied = {}
+    for line in range(0,len(listCurrentDF)):
+        dictFSOccupied[listCurrentDF[line].split()[5]] = int(listCurrentDF[line].split()[4].split('%')[0])
       
-      return dictFSOccupied
+    return dictFSOccupied
   
   def logToSyslog(self,message):
-      dprint("Logging to Syslog")
-      syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT,)
-      syslog.syslog(message)
+    """Log to Syslog if only the --syslog option is passed"""
+    dprint("Logging to Syslog")
+    syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT,)
+    syslog.syslog(message)
     
   
   def checkFileSystemAndLog(self, dictCurrentStatus, threshold=90, logFile=sys.stdout):
+    """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon threshold"""
     for fs in dictCurrentStatus.keys():
       if (dictCurrentStatus[fs] >= threshold):
         logmessage =   "ALERT: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
@@ -67,8 +72,6 @@ class  DiskSpaceChecker:
         dprint("INFO: " + fs + " is at " + str(dictCurrentStatus[fs]) + "%")
         
     
-
-
 
 dObj = DiskSpaceChecker()
 listDfOutPut = dObj.getDFOutput()
