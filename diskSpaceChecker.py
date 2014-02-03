@@ -56,7 +56,7 @@ class  DiskSpaceChecker:
   def logToSyslog(self,message):
     """Log to Syslog if only the --syslog option is passed"""
     dprint("Logging to Syslog")
-    syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT,)
+    # syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT)
     syslog.syslog(message)
     
   
@@ -64,7 +64,7 @@ class  DiskSpaceChecker:
     """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon threshold"""
     for fs in dictCurrentStatus.keys():
       if (dictCurrentStatus[fs] >= threshold):
-        logmessage =   "ALERT: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+        logmessage =   "Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
         logFile.write('[' + time.ctime() + "] " + logmessage)
         if opts.syslog:
           self.logToSyslog(logmessage)
