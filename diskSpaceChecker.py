@@ -39,7 +39,7 @@ class  DiskSpaceChecker:
     
   def getDFOutput(self):
     dfOutput  = commands.getstatusoutput \
-    ("df -h  2>/dev/null | grep -vE '^Filesystem|tmpfs|cdrom|udev|none'")[1].split('\n')
+    ("/bin/df -Ph  2>/dev/null | grep -vE '^Filesystem|tmpfs|cdrom|udev|none'")[1].split('\n')
     return dfOutput
     
     
@@ -58,29 +58,36 @@ class  DiskSpaceChecker:
   
   def checkFileSystemAndLog(self, dictCurrentStatus, threshold=90, logFile=sys.stdout):
     for fs in dictCurrentStatus.keys():
-      if dictCurrentStatus[fs] >= threshold :
-        logmessage =   fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+      if (dictCurrentStatus[fs] >= threshold):
+        logmessage =   "ALERT: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
         logFile.write('[' + time.ctime() + "] " + logmessage)
         if opts.syslog:
-          self.logToSyslog(logmessage)        
+          self.logToSyslog(logmessage)
+      elif (dictCurrentStatus[fs] < threshold):
+        dprint("INFO: " + fs + " is at " + str(dictCurrentStatus[fs]) + "%")
+        
     
 
 
 
 dObj = DiskSpaceChecker()
 listDfOutPut = dObj.getDFOutput()
+dprint(listDfOutPut)
+
 dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
 
-
-
 if opts.logfile == None:
+  dprint("No Log file given. Printing to StdOut")
   dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold))
 else:
     try:
       fh = open(opts.logfile,'a')
+      dprint(fh)
       dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold), logFile=fh)
     except Exception:
       print "Cannot open log file for I/O"
       
-    
-#fh.close()
+if 'fh' in locals():
+  dprint("Closing openfile " + opts.logfile)
+  fh.close()
+      
