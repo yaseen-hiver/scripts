@@ -27,6 +27,7 @@ def dprint(*message):
 parser = optparse.OptionParser()
 
 parser.add_option("-t","--threshold", action="store", dest="threshold", help="Threshold Limit after which alert should be generated", type="int", default=90 )
+parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Limit after")
 parser.add_option("-f","--logfile", action="store", dest="logfile", help="File to be logged in, if not StdOut.")
 parser.add_option("-s","--syslog", action="store_true", dest="syslog", help="Log to Syslog.", default=False)
 parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn on Debugging.", default=False)
@@ -62,6 +63,17 @@ class  DiskSpaceChecker:
   
   def checkFileSystemAndLog(self, dictCurrentStatus, threshold=90, logFile=sys.stdout):
     """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon threshold"""
+    
+    if opts.critical != None:
+      critical = opts.critical
+    elif (int(opts.threshold) + 5 <= 100):
+      critical =  int(opts.threshold) + 5
+    elif (int(opts.threshold) + 5 > 100):
+      critical = 100
+    
+    
+    dprint("Critical is", critical)
+    
     for fs in dictCurrentStatus.keys():
       if (dictCurrentStatus[fs] >= threshold):
         logmessage =   "Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
@@ -81,6 +93,7 @@ dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
 
 if opts.logfile == None:
   dprint("No Log file given. Printing to StdOut")
+  
   dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold))
 else:
     try:
