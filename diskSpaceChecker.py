@@ -27,7 +27,7 @@ def dprint(*message):
 parser = optparse.OptionParser()
 
 parser.add_option("-t","--threshold", action="store", dest="threshold", help="Threshold Limit after which alert should be generated", type="int", default=90 )
-parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Limit after")
+parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Logging Limit")
 parser.add_option("-f","--logfile", action="store", dest="logfile", help="File to be logged in, if not StdOut.")
 parser.add_option("-s","--syslog", action="store_true", dest="syslog", help="Log to Syslog.", default=False)
 parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn on Debugging.", default=False)
