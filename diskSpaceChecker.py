@@ -34,6 +34,21 @@ parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn 
 
 (opts, args) = parser.parse_args()
 
+
+"""Calculate critical limit"""
+
+if opts.critical != None:
+  critical = opts.critical
+elif (int(opts.threshold) + 5 <= 100):
+  critical =  int(opts.threshold) + 5
+elif (int(opts.threshold) + 5 > 100):
+  critical = 100
+
+
+msgCritical = '[CRITICAL]'
+msgWarning = '[WARNING]'  
+  
+
 dprint("Options are", opts)
 dprint("Arguments are", args)
 
@@ -61,27 +76,23 @@ class  DiskSpaceChecker:
     syslog.syslog(message)
     
   
-  def checkFileSystemAndLog(self, dictCurrentStatus, threshold=90, logFile=sys.stdout):
+  def checkFileSystemAndLog(self, dictFSStatus, threshold=90, logFile=sys.stdout):
     """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon threshold"""
     
-    if opts.critical != None:
-      critical = opts.critical
-    elif (int(opts.threshold) + 5 <= 100):
-      critical =  int(opts.threshold) + 5
-    elif (int(opts.threshold) + 5 > 100):
-      critical = 100
-    
-    
     dprint("Critical is", critical)
+    dprint(dictFSStatus.keys())
     
-    for fs in dictCurrentStatus.keys():
-      if (dictCurrentStatus[fs] >= threshold):
-        logmessage =   "Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+    for fs in dictFSStatus.keys(): 
+      dprint("Checking, ", fs)
+      if (dictFSStatus[fs] >= critical):
+        logmessage =   "[CRITICAL] Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictFSStatus[fs]) + "%\n"
         logFile.write('[' + time.ctime() + "] " + logmessage)
-        if opts.syslog:
+      elif (dictFSStatus[fs] >= threshold):
+        logmessage =   "[WARNING] Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictFSStatus[fs]) + "%\n"
+      if opts.syslog:
           self.logToSyslog(logmessage)
-      elif (dictCurrentStatus[fs] < threshold):
-        dprint("INFO: " + fs + " is at " + str(dictCurrentStatus[fs]) + "%")
+      elif (dictFSStatus[fs] < critical):
+          dprint("INFO: " + fs + " is at " + str(dictFSStatus[fs]) + "%")
         
     
 
@@ -90,10 +101,11 @@ listDfOutPut = dObj.getDFOutput()
 dprint(listDfOutPut)
 
 dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
+dprint(dictOccupiedSpace)
 
 if opts.logfile == None:
   dprint("No Log file given. Printing to StdOut")
-  
+  dprint(dictOccupiedSpace)
   dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold))
 else:
     try:
