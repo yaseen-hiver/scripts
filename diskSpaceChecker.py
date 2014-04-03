@@ -9,7 +9,7 @@
 # If Splunk monitors  and alerts for syslog, look for pattern like below
 # Feb  2 18:44:07 linuxbox.domain.com DISKSPACE.PY[4062]: /home is  above threshold of 90. Currently at 93%
 
-# Usage: python diskSpaceChecker.py --threshold 85 --syslog 
+# Usage: python diskSpaceChecker.py --warning 85 --syslog 
 
 
 import commands
@@ -26,8 +26,9 @@ def dprint(*message):
 
 parser = optparse.OptionParser()
 
-parser.add_option("-t","--threshold", action="store", dest="threshold", help="Threshold Limit after which alert should be generated", type="int", default=90 )
-parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Logging Limit")
+parser.add_option("-t","--warning", action="store", dest="warning", help="Threshold Limit after which alert should be generated", type="int", default=90)
+parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Limit after which alert should be generated", type="int")
+
 parser.add_option("-f","--logfile", action="store", dest="logfile", help="File to be logged in, if not StdOut.")
 parser.add_option("-s","--syslog", action="store_true", dest="syslog", help="Log to Syslog.", default=False)
 parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn on Debugging.", default=False)
@@ -35,20 +36,17 @@ parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn 
 (opts, args) = parser.parse_args()
 
 
-"""Calculate critical limit"""
+"""Calculate Critical"""
 
 if opts.critical != None:
   critical = opts.critical
-elif (int(opts.threshold) + 5 <= 100):
-  critical =  int(opts.threshold) + 5
-elif (int(opts.threshold) + 5 > 100):
+elif (int(opts.warning) + 5 <= 100):
+  critical =  int(opts.warning) + 5
+elif (int(opts.warning) + 5 > 100):
   critical = 100
-
-
-msgCritical = '[CRITICAL]'
-msgWarning = '[WARNING]'  
   
-
+dprint("Critical is", critical)
+  
 dprint("Options are", opts)
 dprint("Arguments are", args)
 
@@ -75,24 +73,37 @@ class  DiskSpaceChecker:
     # syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT)
     syslog.syslog(message)
     
+  def checkCriticalLimit(self, fs):
+    if (dictOccupiedSpace[fs] >= critical):
+      return True
+    
+      
+  def checkWarningLimit(self, fs):
+    if (dictOccupiedSpace[fs] >= int(opts.warning)):
+      return True
+    else:
+      return False
   
-  def checkFileSystemAndLog(self, dictFSStatus, threshold=90, logFile=sys.stdout):
-    """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon threshold"""
-    
-    dprint("Critical is", critical)
-    dprint(dictFSStatus.keys())
-    
-    for fs in dictFSStatus.keys(): 
-      dprint("Checking, ", fs)
-      if (dictFSStatus[fs] >= critical):
-        logmessage =   "[CRITICAL] Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictFSStatus[fs]) + "%\n"
+  
+  def checkFileSystemAndLog(self, dictCurrentStatus, warning=90, logFile=sys.stdout):
+    """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon warning"""
+    for fs in dictCurrentStatus.keys():
+      
+      if self.checkCriticalLimit(fs):
+        logmessage =   "[Disk Space CRITICAL] Disk Space: " + fs + ' is  above critical threshold of ' + str(critical) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
         logFile.write('[' + time.ctime() + "] " + logmessage)
-      elif (dictFSStatus[fs] >= threshold):
-        logmessage =   "[WARNING] Disk Space Alert: " + fs + ' is  above threshold of ' + str(threshold) + ". Currently at " + str(dictFSStatus[fs]) + "%\n"
-      if opts.syslog:
+        if opts.syslog:
           self.logToSyslog(logmessage)
-      elif (dictFSStatus[fs] < critical):
-          dprint("INFO: " + fs + " is at " + str(dictFSStatus[fs]) + "%")
+        
+                 
+      elif self.checkWarningLimit(fs):
+        logmessage =   "[Disk Space WARNING] : " + fs + ' is  above warning threshold of ' + str(warning) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+        logFile.write('[' + time.ctime() + "] " + logmessage)
+        if opts.syslog:
+          self.logToSyslog(logmessage)
+          
+      elif not self.checkWarningLimit(fs):
+        dprint("INFO: " + fs + " is at " + str(dictCurrentStatus[fs]) + "%")
         
     
 
@@ -101,17 +112,15 @@ listDfOutPut = dObj.getDFOutput()
 dprint(listDfOutPut)
 
 dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
-dprint(dictOccupiedSpace)
 
 if opts.logfile == None:
   dprint("No Log file given. Printing to StdOut")
-  dprint(dictOccupiedSpace)
-  dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold))
+  dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning))
 else:
     try:
       fh = open(opts.logfile,'a')
       dprint(fh)
-      dObj.checkFileSystemAndLog(dictOccupiedSpace, threshold=int(opts.threshold), logFile=fh)
+      dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning), logFile=fh)
     except Exception:
       print "Cannot open log file for I/O"
       
