@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #Author: Garfield Carneiro
-#Date: 1 Feb 2014
+#Date: 4 April 2014
 #Note: Python 2.6.X compatible
 #Description: This script checks and logs the disk space as per threshold.
 
@@ -28,7 +28,6 @@ parser = optparse.OptionParser()
 
 parser.add_option("-t","--warning", action="store", dest="warning", help="Threshold Limit after which alert should be generated", type="int", default=90)
 parser.add_option("-c","--critical", action="store", dest="critical", help="Critical Limit after which alert should be generated", type="int")
-
 parser.add_option("-f","--logfile", action="store", dest="logfile", help="File to be logged in, if not StdOut.")
 parser.add_option("-s","--syslog", action="store_true", dest="syslog", help="Log to Syslog.", default=False)
 parser.add_option("-d","--debug", action="store_true", dest="debug", help="Turn on Debugging.", default=False)
@@ -62,10 +61,32 @@ class  DiskSpaceChecker:
   def getFileSystemStatus(self, listCurrentDF):
     """Parses output from getDFOutput() and outputs a dictionary containing Filesystem usage"""
     dictFSOccupied = {}
+    
     for line in range(0,len(listCurrentDF)):
         dictFSOccupied[listCurrentDF[line].split()[5]] = int(listCurrentDF[line].split()[4].split('%')[0])
-      
+        
     return dictFSOccupied
+    
+  def logger(self, message):
+    
+    if opts.logfile == None:
+      dprint("No Log file given. Printing to StdOut")
+      logfile = sys.stdout
+    else:
+        try:
+          logfile = open(opts.logfile,'a')
+          dprint(logfile)
+        except Exception:
+            print "Cannot open %s log file for I/O" % (opts.logfile)
+          
+    dprint("Logfile is" , logfile)
+    logfile.write(message)
+    
+    """Write to Syslog if true"""
+    if opts.syslog:
+      syslog.syslog(message)
+    
+    
   
   def logToSyslog(self,message):
     """Log to Syslog if only the --syslog option is passed"""
@@ -85,22 +106,23 @@ class  DiskSpaceChecker:
       return False
   
   
-  def checkFileSystemAndLog(self, dictCurrentStatus, warning=90, logFile=sys.stdout):
+  def checkFileSystemAndLog(self, dictCurrentStatus, warning=90):
     """Check each filesystem and log as ALERT or INFO (if debug mode is enabled) depending upon warning"""
+    
     for fs in dictCurrentStatus.keys():
       
       if self.checkCriticalLimit(fs):
-        logmessage =   "[Disk Space CRITICAL] Disk Space: " + fs + ' is  above critical threshold of ' + str(critical) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
-        logFile.write('[' + time.ctime() + "] " + logmessage)
-        if opts.syslog:
-          self.logToSyslog(logmessage)
+        logmessage = '[' + time.ctime() + "] " +  "[Disk Space CRITICAL] Disk Space: " + fs + ' is  above critical threshold of ' + str(critical) +  \
+        ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+        self.logger(logmessage)
         
-                 
+        
       elif self.checkWarningLimit(fs):
-        logmessage =   "[Disk Space WARNING] : " + fs + ' is  above warning threshold of ' + str(warning) + ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
-        logFile.write('[' + time.ctime() + "] " + logmessage)
-        if opts.syslog:
-          self.logToSyslog(logmessage)
+        
+        logmessage =   '[' + time.ctime() + "] " + "[Disk Space WARNING] : " + fs + ' is  above warning threshold of ' + str(warning) + \
+        ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
+        self.logger(logmessage)
+        
           
       elif not self.checkWarningLimit(fs):
         dprint("INFO: " + fs + " is at " + str(dictCurrentStatus[fs]) + "%")
@@ -113,18 +135,11 @@ dprint(listDfOutPut)
 
 dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
 
-if opts.logfile == None:
-  dprint("No Log file given. Printing to StdOut")
-  dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning))
-else:
-    try:
-      fh = open(opts.logfile,'a')
-      dprint(fh)
-      dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning), logFile=fh)
-    except Exception:
-      print "Cannot open log file for I/O"
+
+dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning))
+
       
-if 'fh' in locals():
-  dprint("Closing openfile " + opts.logfile)
-  fh.close()
+#if 'fh' in locals():
+#  dprint("Closing openfile " + opts.logfile)
+#  fh.close()
       
