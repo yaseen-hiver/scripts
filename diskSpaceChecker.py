@@ -68,7 +68,6 @@ class  DiskSpaceChecker:
     return dictFSOccupied
     
   def logger(self, message):
-    
     if opts.logfile == None:
       dprint("No Log file given. Printing to StdOut")
       logfile = sys.stdout
@@ -89,11 +88,13 @@ class  DiskSpaceChecker:
     
     
   def checkCriticalLimit(self, fs):
+    """Log on CRITICAL limit true """
     if (dictOccupiedSpace[fs] >= critical):
       return True
     
       
   def checkWarningLimit(self, fs):
+    """Log on WARNING limit true """
     if (dictOccupiedSpace[fs] >= int(opts.warning)):
       return True
     else:
@@ -106,14 +107,14 @@ class  DiskSpaceChecker:
     for fs in dictCurrentStatus.keys():
       
       if self.checkCriticalLimit(fs):
-        logmessage = '[' + time.ctime() + "] " +  "[Disk Space CRITICAL] Disk Space: " + fs + ' is  above critical threshold of ' + str(critical) +  \
+        logmessage = '[' + time.ctime() + "] " +  "CRITICAL DiskSpace: " + fs + ' is  above critical threshold of ' + str(critical) +  \
         ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
         self.logger(logmessage)
         
         
       elif self.checkWarningLimit(fs):
         
-        logmessage =   '[' + time.ctime() + "] " + "[Disk Space WARNING] : " + fs + ' is  above warning threshold of ' + str(warning) + \
+        logmessage =   '[' + time.ctime() + "] " + "WARNING DiskSpace: " + fs + ' is  above warning threshold of ' + str(warning) + \
         ". Currently at " + str(dictCurrentStatus[fs]) + "%\n"
         self.logger(logmessage)
         
@@ -128,12 +129,6 @@ listDfOutPut = dObj.getDFOutput()
 dprint(listDfOutPut)
 
 dictOccupiedSpace = dObj.getFileSystemStatus(listDfOutPut)
-
-
 dObj.checkFileSystemAndLog(dictOccupiedSpace, warning=int(opts.warning))
 
-      
-#if 'fh' in locals():
-#  dprint("Closing openfile " + opts.logfile)
-#  fh.close()
       
