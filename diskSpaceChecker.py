@@ -87,12 +87,6 @@ class  DiskSpaceChecker:
       syslog.syslog(message)
     
     
-  
-  def logToSyslog(self,message):
-    """Log to Syslog if only the --syslog option is passed"""
-    dprint("Logging to Syslog")
-    # syslog.openlog(ident=sys.argv[0].upper(), logoption=syslog.LOG_PID, facility=syslog.LOG_ALERT)
-    syslog.syslog(message)
     
   def checkCriticalLimit(self, fs):
     if (dictOccupiedSpace[fs] >= critical):
