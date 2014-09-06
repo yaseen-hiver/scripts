@@ -1,2 +1,2 @@
 MAILTO=""
-*/2 * * * * /root/scripts/speedcheck.sh
+*/5 * * * * /root/scripts/speedcheck.sh
