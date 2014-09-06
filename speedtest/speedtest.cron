@@ -1,0 +1,2 @@
+MAILTO=""
+*/2 * * * * /root/scripts/speedcheck.sh
