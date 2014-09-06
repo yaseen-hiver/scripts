@@ -15,8 +15,8 @@ if [ ! -d $LOG_DIR ] ; then
     mkdir $LOG_DIR
 fi
 
+echo >> $LOGFILE
 echo -n "$LOGTIME|"  >> $LOGFILE
 /usr/local/bin/speedtest --server 4064 | egrep  'Upload:|Download:' | tr '\n' '|'  >> $LOGFILE
-echo
 
 exit
