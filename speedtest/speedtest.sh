@@ -5,8 +5,8 @@ LOG_DIR="/var/log/speedtest"
 
 
 LOGFILE_DATE=$(date "+%d-%b-%Y")
-#LOGTIME=$(date "+%H%M%S")
-#LOGFILE=$LOG_DIR/speedtest-$LOGFILE_DATE.log
+LOGTIME=$(date "+%d%b%Y-%H%M%S")
+#LOGFILE=$LOG_DIR/speedtest-$LOGFILE_DATE.log #Use this if you are not using logrotate
 LOGFILE=$LOG_DIR/speedtest.log
 
 #echo "Log File is $LOGFILE"
