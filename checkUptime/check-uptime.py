@@ -21,10 +21,8 @@ parser.add_argument("--whours",   "-wh", type=int, default=W_HOURS, action="stor
 argv = parser.parse_args()
 #print argv
 
-#----------------------------------------
-# Gives a human-readable uptime uptimeString
+# Gives a human-readable  uptimeString
 def uptime():
- 
   try:
     f = open( "/proc/uptime" )
     contents = f.read().split()
@@ -52,9 +50,6 @@ def uptime():
   #print "DAYS = %s HOURS = %s, MINUTES = %s" % (days, hours, minutes)
   #print "CRITICAL: HOURS = %s, MINUTES = %s" % (argv.chours, argv.cminutes) 
   
-  
-  
-
   if days > 0:
     uptimeString += str(days) + " " + (days == 1 and "day" or "days" ) + ", "
   if len(uptimeString) > 0 or hours > 0:
@@ -62,6 +57,8 @@ def uptime():
   if len(uptimeString) > 0 or minutes > 0:
     uptimeString += str(minutes) + " " + (minutes == 1 and "minute" or "minutes" ) + ", "
     uptimeString += str(seconds) + " " + (seconds == 1 and "second" or "seconds" )
+  
+  #print uptimeString
 
   if ( days == 0 and hours == 0 and  minutes <= argv.cminutes ) :
     print "CRITICAL: Uptime is less than %s minutes. Currently %s" % ( argv.cminutes, uptimeString )
@@ -72,10 +69,9 @@ def uptime():
   elif ( days == 0 and (( hours >= argv.chours ) and ( hours <= argv.whours)) ) :
     print "WARNING: Uptime is  %s hours. Currently %s" % ( argv.whours , uptimeString )
     return STATE_WARNING
-  elif ( days == 0 and ( hours > argv.whours ) ) :
+  elif ( days >= 0 and ( hours > argv.whours ) ) :
     print "OK.  Uptime is %s " % (uptimeString)
     return STATE_OK
-
 
   #return uptimeString;
 
