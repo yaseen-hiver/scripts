@@ -5,8 +5,8 @@ import argparse
 #Declare critical and warning defaults
 C_HOURS = 1
 C_MINUTES = 15
-W_HOURS = 2
-W_MINUTES = 30 
+W_HOURS = C_HOURS + 1
+#W_MINUTES = 30 
 
 #Nagios States and Return Codes
 STATE_OK=0
@@ -17,23 +17,23 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--chours",   "-ch", type=int, default=C_HOURS, action="store", help="Hours critical")
 parser.add_argument("--cminutes", "-cm", type=int, default=C_MINUTES, action="store", help="Minutes critical")
 parser.add_argument("--whours",   "-wh", type=int, default=W_HOURS, action="store", help="Hours warning")
-parser.add_argument("--wminutes", "-wm", type=int, default=W_MINUTES, action="store", help="Minutes warning")
+#parser.add_argument("--wminutes", "-wm", type=int, default=W_MINUTES, action="store", help="Minutes warning")
 argv = parser.parse_args()
-print argv
+#print argv
 
 #----------------------------------------
-# Gives a human-readable uptime string
+# Gives a human-readable uptime uptimeString
 def uptime():
  
   try:
-    f = open( "./procuptime" )
+    f = open( "/proc/uptime" )
     contents = f.read().split()
     f.close()
   except:
     return "Cannot open uptime file: /proc/uptime"
 
   total_seconds = float(contents[0])
-  print total_seconds
+  #print total_seconds
     
   # Helper vars:
   MINUTE  = 60
@@ -46,33 +46,39 @@ def uptime():
   minutes = int( ( total_seconds % HOUR ) / MINUTE )
   seconds = int( total_seconds % MINUTE )
 
-  # Build up the pretty string (like this: "N days, N hours, N minutes, N seconds")
-  string = ""
+  # Build up the pretty uptimeString (like this: "N days, N hours, N minutes, N seconds")
+  uptimeString = ""
    
-  print "ARGUMENT CHOURS = %s, HOURS = %s, DAYS = %s" % (argv.chours, hours, days)
-   
-  if ( days == 0 and argv.chours == 0 and  minutes <= argv.cminutes ) :
-    print "CRITICAL: Uptime is less than %s minutes" % ( argv.cminutes )
-    return STATE_CRITICAL
-  elif ( days == 0 and hours >= argv.chours ) :
-    print "CRITICAL: Uptime is less than %s hours" % ( argv.chours )
-    return STATE_CRITICAL
-  elif ( days == 0 and argv.chours < 1 and  minutes <= argv.wminutes ) :
-    print "WARNING: Uptime is less than %s minutes" % ( argv.wminutes )
-    return STATE_WARNING
-  elif ( days == 0 and hours >= argv.whours ) :
-    print "WARNING: Uptime is less than %s hours" % ( argv.whours )
-    return STATE_WARNING
+  #print "DAYS = %s HOURS = %s, MINUTES = %s" % (days, hours, minutes)
+  #print "CRITICAL: HOURS = %s, MINUTES = %s" % (argv.chours, argv.cminutes) 
+  
+  
+  
 
   if days > 0:
-    string += str(days) + " " + (days == 1 and "day" or "days" ) + ", "
-  if len(string) > 0 or hours > 0:
-    string += str(hours) + " " + (hours == 1 and "hour" or "hours" ) + ", "
-  if len(string) > 0 or minutes > 0:
-    string += str(minutes) + " " + (minutes == 1 and "minute" or "minutes" ) + ", "
-    string += str(seconds) + " " + (seconds == 1 and "second" or "seconds" )
+    uptimeString += str(days) + " " + (days == 1 and "day" or "days" ) + ", "
+  if len(uptimeString) > 0 or hours > 0:
+    uptimeString += str(hours) + " " + (hours == 1 and "hour" or "hours" ) + ", "
+  if len(uptimeString) > 0 or minutes > 0:
+    uptimeString += str(minutes) + " " + (minutes == 1 and "minute" or "minutes" ) + ", "
+    uptimeString += str(seconds) + " " + (seconds == 1 and "second" or "seconds" )
 
-  return string;
+  if ( days == 0 and hours == 0 and  minutes <= argv.cminutes ) :
+    print "CRITICAL: Uptime is less than %s minutes. Currently %s" % ( argv.cminutes, uptimeString )
+    return STATE_CRITICAL
+  elif ( days == 0 and hours < argv.chours ) :
+    print "CRITICAL: Uptime is less than %s hours. Currently %s" % ( argv.chours, uptimeString )
+    return STATE_CRITICAL
+  elif ( days == 0 and (( hours >= argv.chours ) and ( hours <= argv.whours)) ) :
+    print "WARNING: Uptime is  %s hours. Currently %s" % ( argv.whours , uptimeString )
+    return STATE_WARNING
+  elif ( days == 0 and ( hours > argv.whours ) ) :
+    print "OK.  Uptime is %s " % (uptimeString)
+    return STATE_OK
 
-  #print "The system uptime is:", uptime()
-  print uptime()
+
+  #return uptimeString;
+
+  #print "The system uptime is:", uptime() 
+exitCode = uptime()
+exit(exitCode)
