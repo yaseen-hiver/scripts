@@ -1,0 +1,21 @@
+---
+log_src_command: /bin/dmesg
+
+nic:
+    warn:
+    - "NIC Link is Up"
+    - "Warning: No 802.3ad response from the link partner for any adapters in the bond"
+    crit:
+    - "NIC Link is Down"
+    - "bonding: bond0: link status definitely down for interface"
+ 
+disk:
+    warn:
+    - "end_request: I/O error"
+    crit:
+    - "megaraid_sas.*Battery has failed"
+
+kernel_trace:
+    warn: 
+    - "Call Trace:"
+    - "hung_task_timeout_secs"
